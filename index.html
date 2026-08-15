@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Boudhanath — A Starry Night in Kathmandu</title>
+<meta name="description" content="A Nepali chaitya under a night sky: prayer flags off the summit and a wall of prayer wheels turning at its foot.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <canvas id="stage"></canvas>
+
+  <header class="chrome">
+    <div class="brand">
+      <p class="eyebrow" id="eyebrow">A starry night in Kathmandu</p>
+      <p class="prompt" id="hint">[ Stir the flags &bull; Spin the wheels ]</p>
+    </div>
+    <div class="side">
+      <div class="acts">
+        <button id="sound" type="button">Sound</button>
+        <button id="lang" type="button">नेपाली</button>
+      </div>
+      <!-- Filled from PLACE in scene.js. -->
+      <div class="plate" id="plate" hidden>
+        <h1 class="place" id="placeName"></h1>
+        <p class="blurb" id="placeBody"></p>
+        <!-- how many of the building's hot-points have been opened -->
+        <p class="tally" id="tally" hidden></p>
+      </div>
+    </div>
+  </header>
+
+  <!-- The hot-points, and the one card they all open into. Both are built and
+       filled from SPOTS in scene.js: the markers are anchored to the crown's
+       own published geometry, so there is nothing here to keep in step with
+       the drawing. Real buttons, so they are reachable by tab and speak their
+       own names. -->
+  <div id="marks" class="marks" hidden></div>
+  <div id="spot" class="spot" role="dialog" aria-modal="false" aria-labelledby="spotName" hidden>
+    <button class="spot-x" id="spotClose" type="button" aria-label="Close">&times;</button>
+    <h2 class="spot-name" id="spotName"></h2>
+    <p class="spot-body" id="spotBody"></p>
+  </div>
+
+  <!-- The visible copy is drawn on canvas so it can live in the physics.
+       This mirror carries the same words for screen readers. -->
+  <div id="srtext" class="sr-only" aria-live="polite"></div>
+
+  <script src="js/cloth.js"></script>
+  <script src="js/bells.js"></script>
+  <script src="js/flutter.js"></script>
+  <script src="js/crowns.js"></script>
+  <script src="js/scene.js"></script>
+  <script src="js/firefly.js"></script>
+</body>
+</html>
