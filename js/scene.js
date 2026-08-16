@@ -977,12 +977,33 @@
       for (var f = 0; f < 6; f++) {
         var t = f / 5;
         var ax = mid + side * (coreW * 0.20 + t * (stageW * 0.5 - coreW * 0.20 - 6));
-        /* A FRACTION of the run from summit to ground, never a pixel offset off
-           the ground line: the building is centred, so the cornice moves with
-           the window. Fixed offsets flatten the fan on a tall page and, on a
-           short one, land the outer ends BELOW THE GROUND LINE — flags sinking
-           into the terrace. As a fraction the splay holds at any height. */
-        var ay = summit.y + (crownY - summit.y) * (0.50 + t * 0.36);
+        /* ---- how far the line falls ------------------------------------
+         * A FRACTION of the run from summit to ground, never a pixel offset
+         * off the ground line: the building is centred, so the cornice moves
+         * with the window. Fixed offsets flatten the fan on a tall page and,
+         * on a short one, land the outer ends BELOW THE GROUND LINE — flags
+         * sinking into the terrace.
+         *
+         * BUT THE FRACTION ALONE IS WRONG ON A PHONE, because the two halves
+         * of a line are measured against different things: the drop is a share
+         * of the BUILDING's height, the run a share of the STAGE's width. On a
+         * wide window there is stage to spare either side of the building and
+         * the fan opens from about 54 degrees at the mast to 37 at the
+         * outermost line. On a narrow one the building fills nearly the whole
+         * stage, so the run collapses by four while the drop only collapses by
+         * three — every line lands within a couple of degrees of its
+         * neighbour, and six near-parallel steep cords read as curtains hung
+         * past the terraces rather than as a fan.
+         *
+         * The run cannot grow; there is no window left to grow into. So the
+         * drop is capped against the run each line actually has, on a ceiling
+         * that eases from 1.42 at the mast to 0.78 at the outermost line —
+         * just clear of the angles a wide window produces on its own, so this
+         * never binds there and the desktop fan is exactly what it was.
+         * ---------------------------------------------------------------- */
+        var run = Math.abs(ax - summit.x);
+        var fall = (crownY - summit.y) * (0.50 + t * 0.36);
+        var ay = summit.y + Math.min(fall, run * (1.42 - 0.64 * t));
         var lc = makeLine(summit.x, summit.y, ax, ay,
                           1.018 + t * 0.016, (ax / W) * 6.0);
         /* and its voice: `size` pitches the cloth, a short steep line carrying
