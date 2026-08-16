@@ -37,10 +37,10 @@
      and the wall of drums at the foot. `bare` is the crown-looking view, where
      the foot is empty and the flags are all there is to touch. */
   var UI = {
-    en: { eyebrow: 'A starry night in Kathmandu', sound: 'Sound',
+    en: { eyebrow: 'A starry night in Kathmandu', sound: 'Sound', about: 'About',
           hint: { stupa: '[ Stir the flags • Spin the wheels ]',
                   bare:  '[ Stir the flags ]' } },
-    ne: { eyebrow: 'काठमाडौंको ताराभरी रात', sound: 'आवाज',
+    ne: { eyebrow: 'काठमाडौंको ताराभरी रात', sound: 'आवाज', about: 'बारेमा',
           hint: { stupa: '[ लुङ्दर हल्लाउनुहोस् • चक्र घुमाउनुहोस् ]',
                   bare:  '[ लुङ्दर हल्लाउनुहोस् ]' } }
   };
@@ -1774,6 +1774,8 @@
   window.addEventListener('keydown', wake, { once: true });
   var langBtn = document.getElementById('lang');
   var soundBtn = document.getElementById('sound');
+  var aboutBtn = document.getElementById('aboutBtn');
+  var aboutBox = document.getElementById('about');
   function paintChrome() {
     var u = UI[lang];
     document.getElementById('eyebrow').textContent = u.eyebrow;
@@ -1797,6 +1799,9 @@
     /* breathing until there is actually audio to hear — see wake() */
     soundBtn.classList.toggle('is-idle', !live() && !bells.muted);
     langBtn.textContent = lang === 'en' ? 'नेपाली' : 'English';
+    /* Only the button label switches. The card behind it is a person writing
+       about herself, so its Nepali is hers to write, not this file's. */
+    aboutBtn.textContent = u.about;
     document.documentElement.lang = lang === 'en' ? 'en' : 'ne';
   }
   langBtn.addEventListener('click', function () {
@@ -1809,6 +1814,46 @@
     build(); paintChrome();
   });
   soundBtn.addEventListener('click', function () { wake(); bells.setMuted(!bells.muted); paintChrome(); });
+
+  /* ---- about --------------------------------------------------------------
+   * Who made this. It opens over the middle of the scene rather than beside a
+   * node, and it is the one panel on the page with a link in it — which is why
+   * its own pointerdown is stopped here. The window-level closer below listens
+   * on pointerdown, and a press inside the card would otherwise close it out
+   * from under the link before the click could land.
+   * ---------------------------------------------------------------------- */
+  function aboutOpen() { return aboutBox.classList.contains('is-in'); }
+
+  function openAbout() {
+    closeSpot();
+    aboutBox.hidden = false;
+    aboutBtn.setAttribute('aria-expanded', 'true');
+    /* a frame between being laid out and being told to grow — same bargain the
+       hot-point card makes in openAt */
+    requestAnimationFrame(function () { aboutBox.classList.add('is-in'); });
+  }
+
+  function closeAbout() {
+    if (!aboutOpen()) return;
+    aboutBox.classList.remove('is-in');
+    aboutBtn.setAttribute('aria-expanded', 'false');
+    setTimeout(function () { if (!aboutOpen()) aboutBox.hidden = true; }, 320);
+  }
+
+  /* The button swallows its own pointerdown as well, so the closer cannot fire
+     between the press and the click and turn every second press into a
+     reopen. */
+  aboutBtn.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+  aboutBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    wake();                       // a press is a gesture, so the audio may start
+    if (aboutOpen()) closeAbout(); else openAbout();
+  });
+  aboutBox.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+  document.getElementById('aboutClose').addEventListener('click', function (e) {
+    e.stopPropagation();
+    closeAbout();
+  });
 
   /* ---- the hot-points, in the page ----------------------------------------
    * The markers are real DOM buttons rather than dots on the canvas. On canvas
@@ -1919,6 +1964,7 @@
   function openAt(sp) {
     var m = marks.filter(function (x) { return x.def === sp; })[0];
     if (!m) return;
+    closeAbout();                 // one panel at a time
     fillSpot(sp);
     spotBox.hidden = false;
 
@@ -1979,9 +2025,9 @@
   /* Anywhere else closes it — including the canvas, which is the thing you go
      back to. The card itself stops the click before it gets here. */
   spotBox.addEventListener('click', function (e) { e.stopPropagation(); });
-  window.addEventListener('pointerdown', function () { closeSpot(); });
+  window.addEventListener('pointerdown', function () { closeSpot(); closeAbout(); });
   window.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') closeSpot();
+    if (e.key === 'Escape') { closeSpot(); closeAbout(); }
   });
 
   buildMarks();

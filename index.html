@@ -20,6 +20,8 @@
       <div class="acts">
         <button id="sound" type="button">Sound</button>
         <button id="lang" type="button">नेपाली</button>
+        <button id="aboutBtn" type="button"
+                aria-expanded="false" aria-controls="about">About</button>
       </div>
       <!-- Filled from PLACE in scene.js. -->
       <div class="plate" id="plate" hidden>
@@ -41,6 +43,20 @@
     <button class="spot-x" id="spotClose" type="button" aria-label="Close">&times;</button>
     <h2 class="spot-name" id="spotName"></h2>
     <p class="spot-body" id="spotBody"></p>
+  </div>
+
+  <!-- Who made this. Not anchored to the building like the hot-point card, so
+       it is simply centred; same materials, one card style on the page. -->
+  <div id="about" class="about" role="dialog" aria-modal="false"
+       aria-labelledby="aboutName" hidden>
+    <button class="spot-x" id="aboutClose" type="button" aria-label="Close">&times;</button>
+    <h2 class="spot-name" id="aboutName">Shreeya Dhakal</h2>
+    <p class="about-where">Greater Seattle Area</p>
+    <p class="spot-body">I am an Applied AI Scientist who is working on curating
+      a space for Nepal and Nepali language on the internet, one project at a
+      time.</p>
+    <a class="about-link" href="https://www.instagram.com/signedbysd/"
+       target="_blank" rel="noopener noreferrer">Instagram &mdash; @signedbysd</a>
   </div>
 
   <!-- The visible copy is drawn on canvas so it can live in the physics.

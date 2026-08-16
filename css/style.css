@@ -116,7 +116,15 @@ html[lang="ne"] .eyebrow {
 }
 html[lang="ne"] .prompt { letter-spacing: 0.02em; font-style: normal; }
 
-.acts { display: flex; gap: 0.55rem; pointer-events: auto; }
+/* Wraps, because three buttons in two scripts is wider than a phone and the
+   alternative is one of them hanging off the edge. */
+.acts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  pointer-events: auto;
+}
 
 /* ---- the right-hand side ------------------------------------------------
  * The two switches, and under them the name of the building you are looking
@@ -431,6 +439,72 @@ html[lang="ne"] .chrome button { letter-spacing: 0.03em; text-transform: none; }
 }
 .spot-x:hover, .spot-x:focus-visible { color: var(--gold-lit); }
 
+/* ---- about --------------------------------------------------------------
+ * The hot-point card grows out of the node it belongs to. This one belongs to
+ * nothing on the building, so it is centred instead — but built from the same
+ * materials, because two card styles on one page is one too many.
+ * ---------------------------------------------------------------------- */
+.about {
+  position: fixed;
+  left: 50%; top: 50%;
+  z-index: 7;
+  width: min(40ch, 84vw);
+  padding: 1.5rem 1.6rem 1.4rem;
+  border: 1px solid rgba(217, 164, 65, 0.3);
+  border-top: 2px solid rgba(217, 164, 65, 0.6);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(217,164,65,0.10), transparent 70%),
+    linear-gradient(180deg, rgba(30, 22, 17, 0.97), rgba(14, 11, 9, 0.98));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.92);
+  transition: opacity 0.26s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.about[hidden] { display: none; }
+.about.is-in {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+
+/* Where she is, set as a caption under the name: brass and tracked, so it
+   reads as a byline rather than as the first line of the paragraph. */
+.about-where {
+  margin: 0 0 0.85rem;
+  font-family: var(--serif);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brass);
+  opacity: 0.8;
+}
+html[lang="ne"] .about-where { letter-spacing: 0.04em; text-transform: none; }
+
+/* The one link on the page, so it is allowed to look like one — underlined on
+   the brass rule the chrome uses, rather than the blue a browser would give
+   it. */
+.about-link {
+  display: inline-block;
+  margin-top: 1rem;
+  font-family: var(--serif);
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--brass);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(185, 143, 60, 0.45);
+  padding-bottom: 2px;
+  transition: color 0.28s, border-color 0.28s;
+}
+.about-link:hover, .about-link:focus-visible {
+  color: var(--brass-lit);
+  border-color: rgba(231, 193, 104, 0.8);
+}
+.about-link:focus-visible { outline: 2px solid rgba(231,193,104,0.5); outline-offset: 3px; }
+
 @keyframes nodeBreathe {
   0%, 100% { opacity: 0.44; }
   50%      { opacity: 0.82; }
@@ -457,6 +531,9 @@ html[lang="ne"] .chrome button { letter-spacing: 0.03em; text-transform: none; }
   .mark::before { animation: none; opacity: 0.75; }
   .spot { transition: opacity 0.2s ease; transform: none; }
   .spot.is-in { transform: none; }
+  /* the centring transform has to survive — only the scale goes */
+  .about { transition: opacity 0.2s ease; transform: translate(-50%, -50%); }
+  .about.is-in { transform: translate(-50%, -50%); }
   /* no breathing, but it still has to read as the live one, so it simply sits
      brighter than the switches around it */
   .chrome button.is-idle { animation: none; opacity: 1; }
