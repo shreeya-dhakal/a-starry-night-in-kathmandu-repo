@@ -105,8 +105,8 @@
   stupa: [
     { key: 'lungta',
       name: { en: 'Prayer Flags (Lung Ta)', ne: 'लुङ्दर (लुङ् ता)' },
-      body: { en: 'Prayer flags consist of five different colors including blue representing sky, white representing air, red representing water, green representing water, and yellow representing the earth. While the 5 colored flag flutters in the wind, they carry mantras with the air and spread their blessings.',
-              ne: 'प्रार्थना झण्डामा पाँच फरक रङहरू हुन्छन् जसमा नीलोले आकाशको प्रतिनिधित्व गर्दछ, सेतोले हावाको प्रतिनिधित्व गर्दछ, रातोले पानीको प्रतिनिधित्व गर्दछ, हरियोले पानीको प्रतिनिधित्व गर्दछ र पहेंलोले पृथ्वीको प्रतिनिधित्व गर्दछ। पाँच रङका झण्डाहरू हावामा फहराउँदा, तिनीहरूले हावासँगै मन्त्रहरू बोकेर आशीर्वाद फैलाउँछन्।' },
+      body: { en: 'Prayer flags consist of five different colors including blue representing sky, white representing air, red representing fire, green representing water, and yellow representing the earth. While the 5 colored flag flutters in the wind, they carry mantras with the air and spread their blessings.',
+              ne: 'प्रार्थना झण्डामा पाँच फरक रङहरू हुन्छन् जसमा नीलोले आकाशको प्रतिनिधित्व गर्दछ, सेतोले हावाको प्रतिनिधित्व गर्दछ, रातोले आगोको प्रतिनिधित्व गर्दछ, हरियोले पानीको प्रतिनिधित्व गर्दछ र पहेंलोले पृथ्वीको प्रतिनिधित्व गर्दछ। पाँच रङका झण्डाहरू हावामा फहराउँदा, तिनीहरूले हावासँगै मन्त्रहरू बोकेर आशीर्वाद फैलाउँछन्।' },
       at: function () {
         /* on the cloth itself, a little out along one of the lines — it moves
            when the line moves, which is the point of putting it there */
