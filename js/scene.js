@@ -250,7 +250,10 @@
      one number flutter.js hands to the bed */
   var windLevel = 0;
 
-  var GRAVITY = 1750;
+  /* On a wide window. layout() scales it down as the window gets taller — see
+     aspectWide() and the note in buildLungta. */
+  var GRAVITY_BASE = 1750;
+  var GRAVITY = GRAVITY_BASE;
   var WIND    = reduced ? 55 : 230;
   /* ---- the physics rate ----------------------------------------------------
    * 120Hz on a desktop, 60Hz on a small machine: half the solver work, half the
@@ -406,6 +409,11 @@
     setCoreWidth(coreW);
   }
 
+  /* 1 on any window wider than 1.25:1, falling away as the window gets taller.
+     The fan's proportions and the cloth's weight are both tuned on a wide
+     window; this is how much of that tuning a narrow one keeps. */
+  function aspectWide() { return Math.min(1, (W / H) / 1.25); }
+
   function layout() {
     /* A phone reports 3 and rendering at 2 is already four times the pixels of
        1x. This is the largest single lever on a small machine, because every
@@ -427,6 +435,8 @@
     seedSky();
     placeCrown();
     paintSky(); bakeFlags();
+    /* The cloth hangs lighter on a tall window — see the note in buildLungta. */
+    GRAVITY = GRAVITY_BASE * (0.55 + 0.45 * aspectWide());
     build();
     showMarks(); placeMarks(); paintTally();
   }
@@ -973,39 +983,51 @@
   function buildLungta(mid, coreW, stageW) {
     var summit = CROWNS[current].summit || { x: mid, y: crownY - 300 };
     lantern = CROWNS[current].lantern || null;
+
+    /* ---- the fan answers the window's shape --------------------------------
+     * The lines keep their full reach at every aspect — they are strung right
+     * across the stage, and a fan that pulls its arms in is a smaller fan, not
+     * a better-fitted one. What changes is how far they FALL, and how heavily
+     * they hang once they are there.
+     *
+     * On a tall window the building is small and the fan has to live inside a
+     * fraction of the height, so the same fractions that read as weight on a
+     * wide screen read as washing on a line. Two separate things put a cord
+     * below its anchors and both are scaled here:
+     *
+     *   FALL   where the outer end is tied off, as a share of the drop from
+     *          the summit to the ground line.
+     *   HANG   how much of the designed sag the cord is laid out with. sag
+     *          goes as the square root of the slack, so the figure is squared
+     *          where it is used and this number is the sag scale itself.
+     *
+     * GRAVITY is the third, and it is set in layout() off the same ratio. It
+     * matters because the solver is not rigid: a handful of Gauss-Seidel
+     * passes leave a loaded cord a little longer than its rest length, and
+     * gravity is what loads it. That share of the droop grew when the physics
+     * rate was halved on small machines, which is the same set of devices this
+     * is correcting for.
+     *
+     * At 1.25:1 and wider all three are 1 and the fan is what it always was.
+     * ---------------------------------------------------------------------- */
+    var wide = aspectWide();
+    var fall = 0.40 + 0.60 * wide;
+    var hang = 0.62 + 0.38 * wide;
+
     for (var side = -1; side <= 1; side += 2) {
       for (var f = 0; f < 6; f++) {
         var t = f / 5;
-        var ax = mid + side * (coreW * 0.20 + t * (stageW * 0.5 - coreW * 0.20 - 6));
-        /* ---- how far the line falls ------------------------------------
-         * A FRACTION of the run from summit to ground, never a pixel offset
-         * off the ground line: the building is centred, so the cornice moves
-         * with the window. Fixed offsets flatten the fan on a tall page and,
-         * on a short one, land the outer ends BELOW THE GROUND LINE — flags
-         * sinking into the terrace.
-         *
-         * BUT THE FRACTION ALONE IS WRONG ON A PHONE, because the two halves
-         * of a line are measured against different things: the drop is a share
-         * of the BUILDING's height, the run a share of the STAGE's width. On a
-         * wide window there is stage to spare either side of the building and
-         * the fan opens from about 54 degrees at the mast to 37 at the
-         * outermost line. On a narrow one the building fills nearly the whole
-         * stage, so the run collapses by four while the drop only collapses by
-         * three — every line lands within a couple of degrees of its
-         * neighbour, and six near-parallel steep cords read as curtains hung
-         * past the terraces rather than as a fan.
-         *
-         * The run cannot grow; there is no window left to grow into. So the
-         * drop is capped against the run each line actually has, on a ceiling
-         * that eases from 1.42 at the mast to 0.78 at the outermost line —
-         * just clear of the angles a wide window produces on its own, so this
-         * never binds there and the desktop fan is exactly what it was.
-         * ---------------------------------------------------------------- */
-        var run = Math.abs(ax - summit.x);
-        var fall = (crownY - summit.y) * (0.50 + t * 0.36);
-        var ay = summit.y + Math.min(fall, run * (1.42 - 0.64 * t));
+        var ax = mid + side * (coreW * 0.20 +
+                               t * (stageW * 0.5 - coreW * 0.20 - 6));
+        /* A FRACTION of the run from summit to ground, never a pixel offset
+           off the ground line: the building is centred, so the cornice moves
+           with the window. Fixed offsets flatten the fan on a tall page and,
+           on a short one, land the outer ends BELOW THE GROUND LINE — flags
+           sinking into the terrace. `fall` above is the aspect's share of it. */
+        var ay = summit.y + (crownY - summit.y) * (0.50 + t * 0.36) * fall;
         var lc = makeLine(summit.x, summit.y, ax, ay,
-                          1.018 + t * 0.016, (ax / W) * 6.0);
+                          1 + (0.018 + t * 0.016) * hang * hang,
+                          (ax / W) * 6.0);
         /* and its voice: `size` pitches the cloth, a short steep line carrying
            small quick flags and a long low one broader ones. See flutter.js. */
         Flutter.arm(lc, 0.82 + t * 0.42);

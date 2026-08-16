@@ -484,12 +484,22 @@ html[lang="ne"] .chrome button { letter-spacing: 0.03em; text-transform: none; }
 }
 html[lang="ne"] .about-where { letter-spacing: 0.04em; text-transform: none; }
 
-/* The one link on the page, so it is allowed to look like one — underlined on
-   the brass rule the chrome uses, rather than the blue a browser would give
-   it. */
+/* Stacked rather than run together on one line: two links of very different
+   lengths side by side leave a ragged gap, and each is a separate place to
+   go rather than a pair of options. */
+.about-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 1.1rem 0 0;
+}
+
+/* The only links on the page, so they are allowed to look like links —
+   underlined on the brass rule the chrome uses, rather than the blue a browser
+   would give them. */
 .about-link {
   display: inline-block;
-  margin-top: 1rem;
   font-family: var(--serif);
   font-size: 0.86rem;
   font-weight: 500;
