@@ -132,7 +132,6 @@
     var base = y - terrH - plinthH - nicheH;      // where the dome springs
     var domeTop = base - Ry;
     var hH = Rx * 0.302, rH = Rx * 0.465;
-    var R = Rx;
     var W1 = Rx * 1.30;
     var steps = [
       { w: W1,        t: y,                h: terrH * 0.40 },
@@ -516,12 +515,20 @@
     })();
 
     /* --- the thirteen rings ---------------------------------------------- */
-    occlude(ctx, mid - R * 0.40, mid + R * 0.40, hTop - 6, 14, 0.45);
     var sy0 = hTop, ringStep = rH / 13;
     /* A stupa spire is a SHORT, BROAD stepped cone — near enough as wide at
        its foot as the harmika it stands on, and about as tall as it is wide.
        Tall and thin it reads as a radio mast. */
     var rw0 = Rx * 0.252, rw1 = rw0 * 0.36;
+    /* Where the spire's foot stands on the harmika's head. Cut to the NARROWER
+       of the caster and the surface it lands on: occlude() fades vertically
+       only, so anything wider prints its hard left and right edges onto the
+       sky as a pair of grey verticals. This ran at 0.40 of the dome's
+       half-width against a harmika 0.27 of it wide — 35px of gradient hanging
+       in open air either side of the building at desktop size. It is the same
+       trap the dome's own contact shadow sidesteps by going radial. */
+    var footW = Math.min(rw0, hw * 1.02);
+    occlude(ctx, mid - footW, mid + footW, hTop, 12, 0.45);
     for (var i = 0; i < 13; i++) {
       var w2 = rw0 + (rw1 - rw0) * (i / 12), yy = sy0 - i * ringStep;
       ctx.fillStyle = vg(ctx, yy - ringStep, yy, '#FDF0C8', '#C89533', '#7A5218');
@@ -765,7 +772,10 @@
               0, Math.PI * 2);
       ctx.fill();
     }
-    occlude(ctx, mid - rw1 * 1.2, mid + rw1 * 1.2, sTop, 10, 0.42);
+    /* The collar overhangs the top ring, so its shadow is cut to the RING it
+       falls on rather than to the collar casting it — see the note at the foot
+       of the spire. Smaller spill than that one, same cause. */
+    occlude(ctx, mid - rw1, mid + rw1, sTop, 10, 0.42);
 
     var cy = yTip;
     var gl = ctx.createRadialGradient(mid, yDrumB, 0, mid, yDrumB, A * 2.4);
