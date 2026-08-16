@@ -52,8 +52,20 @@
   var SPEED_UNIT = 9;
   var SPEED_MAX  = 2.5;
 
+  /* Both of the numbers above are PER STEP, so they move with the physics rate
+     the scene is running at — see the note on STEP_SCALE in scene.js. Cached
+     rather than recomputed in poll(), which runs every step. */
+  var excIn = EXC_IN, excKeep = EXC_KEEP;
+
   var Flutter = {
     R: PTR_R,
+
+    /* `scale` is how many 120Hz steps one step now stands for. Called once by
+       the scene at startup; the defaults above are the 120Hz case. */
+    pace: function (scale) {
+      excIn = EXC_IN * scale;
+      excKeep = Math.pow(EXC_KEEP, scale);
+    },
 
     /* Give a line its share of the wind. `size` is for the drawing's own use —
        the bed is one voice for the whole fan, so nothing is pitched per line.
@@ -92,11 +104,11 @@
           }
           if (d2 < PTR_R * PTR_R) {
             var q = 1 - Math.sqrt(d2) / PTR_R;
-            sd.exc += q * q * speed * EXC_IN;
+            sd.exc += q * q * speed * excIn;
             if (sd.exc > EXC_MAX) sd.exc = EXC_MAX;
           }
         }
-        sd.exc *= EXC_KEEP;
+        sd.exc *= excKeep;
 
         total += sd.exc;
         /* where the wind is coming from: the excitation-weighted middle of the

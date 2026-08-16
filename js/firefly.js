@@ -163,9 +163,14 @@
     }
   }
 
-  /* On wherever there is a canvas to be over. */
+  /* On wherever there is a canvas to be over — and a pointer to keep company.
+     On a touch screen there is no hovering pointer for them to follow, so all
+     three would sit wherever the last tap was: a full-screen canvas, cleared
+     every frame and carrying six radial gradients, for three insects standing
+     still. They are the first thing to go on a small machine. */
   function start() {
     if (!doc.getElementById('stage')) return;
+    if (global.matchMedia && global.matchMedia('(pointer: coarse)').matches) return;
     makeCanvas();
     global.addEventListener('resize', size);
     global.addEventListener('pointermove', function (e) {

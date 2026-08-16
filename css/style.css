@@ -268,10 +268,11 @@ html[lang="ne"] .chrome button { letter-spacing: 0.03em; text-transform: none; }
 
 /* ---- the hot-points -----------------------------------------------------
  * Eight nodes on the building, each anchored to a member the crown publishes.
- * They have to be findable and they must not become the picture: a night scene
- * with eight bright dots on it is a map, not a night. So a node at rest is a
- * small warm point with a soft halo, breathing on a long cycle, and everything
- * louder than that — the ring, the name, the card — waits for a hand.
+ * Two things pull against each other here: they have to be FOUND, and eight
+ * bright dots on a night scene make a map rather than a night. Findability
+ * wins — a node at rest is a small blue point carrying a real glow, breathing
+ * on a long cycle. What still waits for a hand is everything that would turn
+ * the page into a diagram: the ring opening, the name, the card.
  * ---------------------------------------------------------------------- */
 .marks {
   position: fixed;
@@ -316,11 +317,11 @@ html[lang="ne"] .chrome button { letter-spacing: 0.03em; text-transform: none; }
 .mark::before {
   content: '';
   position: absolute;
-  inset: 10px;
+  inset: 9px;
   border-radius: 50%;
-  background: radial-gradient(circle, #EAF4FF 0%, #7FB6F2 48%, rgba(88,150,225,0) 74%);
-  box-shadow: 0 0 12px 3px rgba(96, 162, 240, 0.5);
-  opacity: 0.66;
+  background: radial-gradient(circle, #F4FAFF 0%, #9CCCFF 50%, rgba(96,158,232,0) 78%);
+  box-shadow: 0 0 18px 5px rgba(110, 175, 250, 0.62);
+  opacity: 0.92;
   transition: opacity 0.35s ease, inset 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   animation: nodeBreathe 6s ease-in-out infinite;
 }
@@ -330,12 +331,12 @@ html[lang="ne"] .chrome button { letter-spacing: 0.03em; text-transform: none; }
   position: absolute;
   inset: 3px;
   border-radius: 50%;
-  border: 1px solid rgba(150, 200, 250, 0.5);
+  border: 1px solid rgba(168, 212, 255, 0.72);
   /* the glow goes both ways: outside it is air, inside it is the light coming
      off the node it rings */
-  box-shadow: 0 0 10px 1px rgba(96, 162, 240, 0.30),
-              inset 0 0 6px rgba(96, 162, 240, 0.22);
-  opacity: 0.5;
+  box-shadow: 0 0 14px 2px rgba(110, 175, 250, 0.42),
+              inset 0 0 8px rgba(110, 175, 250, 0.30);
+  opacity: 0.76;
   transform: scale(0.92);
   transition: opacity 0.3s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
               box-shadow 0.35s ease;
@@ -506,8 +507,8 @@ html[lang="ne"] .about-where { letter-spacing: 0.04em; text-transform: none; }
 .about-link:focus-visible { outline: 2px solid rgba(231,193,104,0.5); outline-offset: 3px; }
 
 @keyframes nodeBreathe {
-  0%, 100% { opacity: 0.44; }
-  50%      { opacity: 0.82; }
+  0%, 100% { opacity: 0.72; }
+  50%      { opacity: 1; }
 }
 
 .sr-only {
@@ -528,7 +529,7 @@ html[lang="ne"] .about-where { letter-spacing: 0.04em; text-transform: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .prompt { animation: none; opacity: 0.52; }
-  .mark::before { animation: none; opacity: 0.75; }
+  .mark::before { animation: none; opacity: 0.95; }
   .spot { transition: opacity 0.2s ease; transform: none; }
   .spot.is-in { transform: none; }
   /* the centring transform has to survive — only the scale goes */

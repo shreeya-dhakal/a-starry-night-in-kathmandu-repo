@@ -11,7 +11,10 @@
   'use strict';
 
   var canvas = document.getElementById('stage');
-  var ctx = canvas.getContext('2d');
+  /* The compositor is told there is nothing behind this canvas to blend with.
+     The sky is painted over every pixel on the first draw of every frame, so
+     the alpha channel was only ever costing a per-pixel blend. */
+  var ctx = canvas.getContext('2d', { alpha: false });
   var bells = new window.Bells();
   var Cloth = window.Cloth;
   var CROWNS = window.CROWNS;
@@ -20,6 +23,18 @@
 
   var reduced = window.matchMedia &&
                 window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- the small machine ---------------------------------------------------
+   * A coarse pointer is the honest signal here. It is not really "is this a
+   * phone" — it is "does this device have a GPU and a thermal budget like a
+   * phone's", and the two go together closely enough. `?lite=1` and `?lite=0`
+   * force it either way, because the whole point of a mode like this is being
+   * able to look at it on the machine you are working on.
+   * ---------------------------------------------------------------------- */
+  var LITE = /[?&]lite=(1|on|true|yes)\b/i.test(location.search) ||
+             (!/[?&]lite=(0|off|false|no)\b/i.test(location.search) &&
+              !!(window.matchMedia &&
+                 window.matchMedia('(pointer: coarse)').matches));
 
   /* There is one building and it is the chaitya. `current` is kept as a name
      because the crown, its content and its hot-points are all read out of
@@ -135,7 +150,13 @@
       name: { en: 'Trayodashi Bhuwana (The 13 Tier Spire)', ne: 'त्रयोदशी भुवन (तेह्र तले शिखर)' },
       body: { en: 'Above the square base part, the thirteen steps golden tier structures of the stupa represent thirteen steps to enlightenment. The steps represent the spiritual development stages that a Buddhist practitioner must pass to attain Buddhahood. It is believed that passing all thirteen steps liberates one from samsara and gets Nirvana.',
               ne: 'वर्गाकार आधार भाग माथि, स्तूपको तेह्र खुड्किला सुनौलो तहको संरचनाले ज्ञान प्राप्तिको तेह्र खुड्किलालाई प्रतिनिधित्व गर्दछ। यी खुड्किलाहरूले बौद्ध साधकले बुद्धत्व प्राप्त गर्न पार गर्नुपर्ने आध्यात्मिक विकासका चरणहरूलाई प्रतिनिधित्व गर्दछन्। सबै तेह्र खुड्किलाहरू पार गर्नाले संसारबाट मुक्ति मिल्छ र निर्वाण प्राप्त हुन्छ भन्ने विश्वास गरिन्छ।' },
-      at: function () { return off('rings', 0.72, 0.05); } },
+      /* LOW on the spire, and not spread as hard as the box allows. `rings` is
+         published at the FOOT's width throughout, but the thing tapers to about
+         a third of that by the top — so a node placed near the middle at 0.72
+         of the half-width sat outside the actual cone, in open sky, with the
+         pinnacle's halo washing over it. Carried down to where the cone is
+         widest it lands on the gilt itself, clear of the halo. */
+      at: function () { return off('rings', 0.52, 0.62); } },
 
     { key: 'gajur',
       name: { en: 'Gajur (The Golden Pinnacle)', ne: 'गजुर (स्वर्ण शिखा)' },
@@ -231,7 +252,38 @@
 
   var GRAVITY = 1750;
   var WIND    = reduced ? 55 : 230;
-  var STEP    = 1 / 120;
+  /* ---- the physics rate ----------------------------------------------------
+   * 120Hz on a desktop, 60Hz on a small machine: half the solver work, half the
+   * constraint passes, for the same wall-clock second.
+   *
+   * EVERY PER-STEP CONSTANT BELOW WAS TUNED AT 120Hz, and a fixed timestep is
+   * not a knob you can turn on its own. Anything applied ONCE PER STEP changes
+   * meaning when the steps get rarer:
+   *
+   *   a decay `f` per step becomes f^SCALE, because it is applied half as often
+   *   an injection per step doubles, because there are half as many of them
+   *   an angle advanced per step doubles, for the same reason
+   *
+   * So STEP_SCALE is how many 120Hz steps one step now stands for, and it is
+   * applied to each of those three below rather than the numbers being
+   * re-tuned. The 120Hz figures stay readable as the reference, and there is
+   * one place to look when the rate changes again.
+   *
+   * Forces do NOT need it. Verlet integrates a constant acceleration correctly
+   * at any dt — the velocity carries across steps — so gravity, the wind and
+   * the pointer's shove are already rate-independent.
+   * ---------------------------------------------------------------------- */
+  var STEP       = LITE ? 1 / 60 : 1 / 120;
+  var STEP_SCALE = STEP * 120;
+  /* flutter.js keeps two per-step numbers of its own — see the note there. */
+  Flutter.pace(STEP_SCALE);
+  /* Verlet's per-step velocity retention, at the 120Hz reference. */
+  var CLOTH_DAMP = Math.pow(0.988, STEP_SCALE);
+  /* Relaxation passes per step. Four at the slower rate rather than three,
+     because the constraints are now solved half as often and a lungta line
+     carries two percent slack — left at three the cords visibly sag. It is
+     still a saving: 3x120 sweeps a second becomes 4x60. */
+  var RELAX = LITE ? 4 : 3;
   /* Seven drums on the wall, and a constant rather than a fit to the width.
      See the mani wall in build(). */
   var MANI_COUNT = 7;
@@ -255,8 +307,11 @@
    * decay never reaches zero, and a drum creeping imperceptibly for the rest of
    * the session is worse than one that comes to rest.
    * ---------------------------------------------------------------------- */
-  var MANI_INERTIA  = 0.16;
-  var MANI_FRICTION = reduced ? 0.975 : 0.990;
+  var MANI_INERTIA  = 0.16 * STEP_SCALE;
+  var MANI_FRICTION = Math.pow(reduced ? 0.975 : 0.990, STEP_SCALE);
+  /* Velocity stays in 120Hz units — an angle per reference step — so these two
+     thresholds keep their meaning at either rate. What changes is how far that
+     velocity carries the drum in one step; see `wh.spin +=` in physics(). */
   var MANI_STICTION = 0.004;
   var MANI_MAX      = 1.3;
   /* ---- how the cloth moves --------------------------------------------------
@@ -286,8 +341,10 @@
   /* Strips per flag. One is a flat quad, which is what `reduced` gets: the
      ripple is the part of this that is motion for motion's sake. Three is
      enough to read as a curve at this size and holds the per-frame drawImage
-     count for the whole fan to about six hundred. */
-  var SLICES = reduced ? 1 : 3;
+     count for the whole fan to about six hundred — and that count is the
+     scene's biggest draw cost, so a small machine takes two. At the size a
+     flag lands on a phone the third strip was never resolving anyway. */
+  var SLICES = reduced ? 1 : (LITE ? 2 : 3);
   /* The wave's own clock, ACCUMULATED rather than read off `time`. The rate
      rises with the wind, and rate * time would jump the phase by minutes' worth
      of wave every time the level moved — so the phase is integrated and only
@@ -350,7 +407,12 @@
   }
 
   function layout() {
-    dpr = Math.min(2, window.devicePixelRatio || 1);
+    /* A phone reports 3 and rendering at 2 is already four times the pixels of
+       1x. This is the largest single lever on a small machine, because every
+       full-screen composite in the frame pays it: 1.5 is 2.25x rather than 4x,
+       and at the size the flags are drawn nothing in the scene is carrying
+       detail fine enough to miss the difference. */
+    dpr = Math.min(LITE ? 1.5 : 2, window.devicePixelRatio || 1);
     W = canvas.clientWidth;
     H = canvas.clientHeight;
     canvas.width  = Math.floor(W * dpr);
@@ -503,7 +565,7 @@
       if (fade <= 0) continue;
       st.base = st.a * fade * fade;
       st.cool = i % 9 === 0;
-      if (!reduced && st.base > 0.22 && twinklers.length < 130) {
+      if (!reduced && st.base > 0.22 && twinklers.length < (LITE ? 55 : 130)) {
         twinklers.push(st);
         continue;                                  // left out of the bake
       }
@@ -1046,8 +1108,8 @@
         lc.applyPointer(pointer.x, pointer.y, pointer.vx, pointer.vy,
                         Flutter.R, 170, 700 * grip);
       }
-      lc.integrate(dt, 0.988, GRAVITY);
-      lc.relax(3);
+      lc.integrate(dt, CLOTH_DAMP, GRAVITY);
+      lc.relax(RELAX);
     }
 
     /* and the flags, which sound on every crown that flies them. See
@@ -1123,7 +1185,7 @@
         wh.vel *= MANI_FRICTION;
         if (wh.vel > MANI_MAX) wh.vel = MANI_MAX;
         if (wh.vel < MANI_STICTION) wh.vel = 0;
-        wh.spin += wh.vel;
+        wh.spin += wh.vel * STEP_SCALE;
       }
 
       pollWheels(time, onRack, rightward);
@@ -1577,11 +1639,18 @@
 
       /* This drum's own angle, not the row's. See the physics — each barrel
          coasts down from whenever the hand was last on it, so the script on
-         one can be halfway round while its neighbour has stopped. */
+         one can be halfway round while its neighbour has stopped.
+
+         THE SCRIPT TRAVELS WITH THE HAND. You are looking at the near face of
+         the barrel, and the near face goes the way you push it: a rightward
+         hand — the only one that drives a drum here — carries the script
+         rightward across the copper. Subtracting the offset instead runs the
+         near face against the hand, which reads as the drum turning the wrong
+         way even though the physics underneath is correct. */
       var period = 15;
       var off = (((wheelRow[i].spin + wheelRow[i].phase) % period) + period) % period;
       for (var m = -2; m < 7; m++) {
-        var mx = wx - rw + m * period - off + period / 2;
+        var mx = wx - rw + m * period + off + period / 2;
         ctx.strokeStyle = 'rgba(14,6,2,0.85)';          // the groove under it
         glyph(mx + 1.1, reg1 + 1.1, 1.7, m + i);
         glyph(mx + 1.1, reg2 + 1.1, 1.7, m + i + 2);
@@ -1590,10 +1659,12 @@
         glyph(mx, reg2, 1.7, m + i + 2);
       }
 
-      // the fine course between the two registers
+      /* The fine course between the two registers. Same face of the same
+         barrel, so it travels the same way — and by the same distance: `off` is
+         a displacement across the copper, not a fraction of anyone's pitch. */
       ctx.lineWidth = 1;
       for (var f2 = -3; f2 < 14; f2++) {
-        var fx = wx - rw + f2 * 5.6 - off * 0.37;
+        var fx = wx - rw + f2 * 5.6 + off;
         ctx.strokeStyle = 'rgba(12,5,2,0.7)';
         ctx.beginPath();
         ctx.moveTo(fx + 0.9, midA + 2.2); ctx.lineTo(fx + 0.9, midB - 1.4);
@@ -2084,6 +2155,8 @@
      behaviour without a debugger attached */
   window.__dbg = function () {
     return {
+      lite: LITE, hz: Math.round(1 / STEP), relax: RELAX,
+      slices: SLICES, dpr: dpr,
       crownY: crownY, crownH: CROWNS[current].height || 0,
       wheelLine: wheelLine, wheels: wheelRow.length,
       lines: lungta.length, wind: +windLevel.toFixed(3),
